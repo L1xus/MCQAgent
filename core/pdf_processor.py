@@ -1,7 +1,6 @@
 from typing import List, Tuple
 from pypdf import PdfReader
-from chonkie import SlumberChunker, OpenAIGenie
-from core.config import OPENAI_API_KEY, OPENAI_MODEL
+from chonkie import RecursiveChunker, RecursiveRules
 import os
 
 def validate_pdf_size(file_path: str, max_size_mb: int = 10) -> None:
@@ -43,17 +42,12 @@ def extract_text_from_pdf(file_path: str) -> str:
 
 def chunk_text(text: str) -> List:
     try:
-        genie = OpenAIGenie(model=OPENAI_MODEL, api_key=OPENAI_API_KEY)
-        
-        chunker = SlumberChunker(
-            genie=genie,
-            tokenizer="gpt2",
-            chunk_size=1024,
-            candidate_size=128,
+        chunker = RecursiveChunker(
+            tokenizer="character",
+            chunk_size=4000,
+            rules=RecursiveRules(),
             min_characters_per_chunk=100,
-            verbose=False
-        )
-        
+        )       
         chunks = chunker.chunk(text)
         return chunks
         
