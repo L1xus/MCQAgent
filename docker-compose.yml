@@ -8,6 +8,6 @@ services:
     env_file:
       - .env
     ports:
-      - "3000:3000"
+      - "8501:8501"
     volumes:
       - .:/app
