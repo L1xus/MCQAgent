@@ -9,8 +9,8 @@ def main():
     print("="*80 + "\n")
     
     # Configuration
-    pdf_path = "docs/bitcoin.pdf" 
-    num_questions = 5
+    pdf_path = "docs/before-the-coffee-gets-cold.pdf" 
+    num_questions = 10
     
     print(f"📄 PDF: {pdf_path}")
     print(f"❓ Questions: {num_questions}")

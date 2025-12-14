@@ -2,6 +2,21 @@ from typing import List, Tuple
 from pypdf import PdfReader
 from chonkie import SlumberChunker, OpenAIGenie
 from core.config import OPENAI_API_KEY, OPENAI_MODEL
+import os
+
+def validate_pdf_size(file_path: str, max_size_mb: int = 10) -> None:
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"PDF file not found: {file_path}")
+    
+    file_size_bytes = os.path.getsize(file_path)
+    file_size_mb = file_size_bytes / (1024 * 1024)
+    
+    if file_size_mb > max_size_mb:
+        raise ValueError(
+            f"PDF file size ({file_size_mb:.2f}MB) exceeds maximum allowed size ({max_size_mb}MB)"
+        )
+    
+    print(f"✓ PDF size: {file_size_mb:.2f}MB")
 
 def extract_text_from_pdf(file_path: str) -> str:
     try:
@@ -48,6 +63,9 @@ def chunk_text(text: str) -> List:
         return [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
 
 def load_and_chunk_pdf(file_path: str) -> Tuple[str, List]:
+    print("Validating file size...")
+    validate_pdf_size(file_path, max_size_mb=10)
+
     print(f"Extracting text from {file_path}...")
     text = extract_text_from_pdf(file_path)
     
