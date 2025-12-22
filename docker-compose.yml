@@ -2,7 +2,6 @@ version: "3.8"
 
 services:
   mcq:
-    image: mcq_image 
     container_name: mcq_container
     build: "."
     env_file:
