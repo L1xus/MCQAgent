@@ -1,6 +1,7 @@
 from typing import Dict
 from core.pdf_processor import load_and_chunk_pdf
 from core.agent import create_mcq_agent, generate_mcqs_from_chunk
+from core.tracker import tracker
 
 def generate_mcqs_from_pdf(pdf_path: str, num_questions: int = 10) -> Dict:
     # Step 1: Load PDF and chunk it with Chonkie
@@ -23,26 +24,31 @@ def generate_mcqs_from_pdf(pdf_path: str, num_questions: int = 10) -> Dict:
         if i == len(chunks) - 1:
             remaining = num_questions - len(all_mcqs)
             questions_per_chunk = max(1, remaining)
-        
+
         # Extract text from chunk
         chunk_text = chunk.text if hasattr(chunk, 'text') else str(chunk)
-        
         print(f"Processing chunk {i+1}/{len(chunks)}...")
         
-        # Generate MCQs
-        mcqs = generate_mcqs_from_chunk(
+        # Get MCQs and Usage Data
+        mcqs, usage = generate_mcqs_from_chunk(
             chunk_text,
             min(questions_per_chunk, num_questions - len(all_mcqs)),
             agent
         )
         
+        tracker.log_usage(
+            input_tokens=usage.get("input_tokens", 0), 
+            output_tokens=usage.get("output_tokens", 0)
+        )
+        
         all_mcqs.extend(mcqs)
         
-        # Stop if we have enough questions
         if len(all_mcqs) >= num_questions:
             break
     
-    # Step 4: Return results
+    # Log document completion
+    tracker.log_usage(0, 0, is_new_document=True)
+
     result = {
         "questions": all_mcqs[:num_questions],
         "metadata": {

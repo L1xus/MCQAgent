@@ -1,7 +1,10 @@
 import streamlit as st
 import os
 from services.mcq_service import generate_mcqs_from_pdf
-import tempfile
+import time
+
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 st.set_page_config(
     page_title="MCQ Agent",
@@ -187,15 +190,18 @@ if not st.session_state.quiz_data:
             st.info(f"📄 {uploaded_file.name} ({file_size_mb:.2f}MB)")
             
             if st.button("Generate Quiz"):
-                # Save uploaded file temporarily
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-                    tmp_file.write(uploaded_file.getvalue())
-                    tmp_path = tmp_file.name
+                safe_name = "".join([c for c in uploaded_file.name if c.isalpha() or c.isdigit() or c in (' ', '.', '_')]).rstrip()
+                file_id = f"{int(time.time())}_{safe_name}"
+                save_path = os.path.join(UPLOAD_DIR, file_id)
+                
+                # Save file
+                with open(save_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
                 
                 try:
                     with st.spinner("Generating questions..."):
                         result = generate_mcqs_from_pdf(
-                            pdf_path=tmp_path,
+                            pdf_path=save_path,
                             num_questions=num_questions
                         )
                         
@@ -205,10 +211,9 @@ if not st.session_state.quiz_data:
                 
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
-                
-                finally:
-                    if os.path.exists(tmp_path):
-                        os.unlink(tmp_path)
+                    # Delete if there was an error!
+                    if os.path.exists(save_path):
+                        os.unlink(save_path)
 
 # Quiz Interface
 elif st.session_state.quiz_data and not st.session_state.quiz_submitted:
